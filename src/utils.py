@@ -44,16 +44,16 @@ def get_dataset(args):
         if args.dataset == 'mnist':
             data_dir = '../data/mnist/'
         else:
-            data_dir = '../data/fmnist/'
+            data_dir = '../data/fashion_mnist/'
 
         apply_transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize((0.1307,), (0.3081,))])
 
-        train_dataset = datasets.MNIST(data_dir, train=True, download=True,
+        train_dataset = datasets.FashionMNIST(data_dir, train=True, download=True,
                                        transform=apply_transform)
 
-        test_dataset = datasets.MNIST(data_dir, train=False, download=True,
+        test_dataset = datasets.FashionMNIST(data_dir, train=False, download=True,
                                       transform=apply_transform)
 
         # sample training data amongst users
