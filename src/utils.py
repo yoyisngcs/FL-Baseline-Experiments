@@ -4,9 +4,11 @@
 
 import copy
 import torch
+from options import args_parser
+import pickle
 from torchvision import datasets, transforms
 from sampling import mnist_iid, mnist_noniid, mnist_noniid_unequal
-from sampling import cifar_iid, cifar_noniid
+from sampling import cifar_iid, cifar_noniid, cifar_noniid_unequal
 
 
 def get_dataset(args):
@@ -35,7 +37,7 @@ def get_dataset(args):
             # Sample Non-IID user data from Mnist
             if args.unequal:
                 # Chose uneuqal splits for every user
-                raise NotImplementedError()
+                user_groups = cifar_noniid_unequal(train_dataset, args.num_users)
             else:
                 # Chose euqal splits for every user
                 user_groups = cifar_noniid(train_dataset, args.num_users)
@@ -50,10 +52,10 @@ def get_dataset(args):
             transforms.ToTensor(),
             transforms.Normalize((0.1307,), (0.3081,))])
 
-        train_dataset = datasets.FashionMNIST(data_dir, train=True, download=True,
+        train_dataset = datasets.MNIST(data_dir, train=True, download=True,
                                        transform=apply_transform)
 
-        test_dataset = datasets.FashionMNIST(data_dir, train=False, download=True,
+        test_dataset = datasets.MNIST(data_dir, train=False, download=True,
                                       transform=apply_transform)
 
         # sample training data amongst users
@@ -84,6 +86,54 @@ def average_weights(w):
     return w_avg
 
 
+def average_weights1(w, w0):
+    """
+    Returns the average of the weights.
+    """
+    w_avg = copy.deepcopy(w[0])
+    for key in w_avg.keys():
+        w_avg[key] = torch.mul(w0[0], w_avg[key])
+        for i in range(1, len(w)):
+            w_avg[key] += torch.mul(w0[i], w[i][key])
+
+    return w_avg
+
+
+def average_weights2(w, w0, p):
+    """
+    Returns the average of the weights.
+    """
+    w_avg = copy.deepcopy(w[0])
+    update = copy.deepcopy(w)
+    update_sum = copy.deepcopy(w[0])
+    a = 0
+    for key in w_avg.keys():
+        a += 1
+        if a <= (p * 2):
+            update_sum[key] = update_sum[key] - update_sum[key]
+            for i in range(len(w)):
+                update[i][key] = torch.abs(w0[key] - w[i][key])
+                update[i][key] = torch.div(sum(update[i][key].view(-1)), update[i][key].view(-1).size(0))
+                update_sum[key] += update[i][key]
+
+            for i in range(len(w)):
+                update[i][key] = torch.div(update[i][key], update_sum[key])
+                if i == 0:
+                    w_avg[key] = torch.mul(update[i][key], w[i][key])
+                else:
+                    w_avg[key] += torch.mul(update[i][key], w[i][key])
+
+        else:
+            for i in range(len(w)):
+                if i == 0:
+                    w_avg[key] = w[i][key]
+                else:
+                    w_avg[key] += w[i][key]
+            w_avg[key] = torch.div(w_avg[key], len(w))
+
+    return w_avg
+
+
 def exp_details(args):
     print('\nExperimental details:')
     print(f'    Model     : {args.model}')
@@ -100,3 +150,16 @@ def exp_details(args):
     print(f'    Local Batch size   : {args.local_bs}')
     print(f'    Local Epochs       : {args.local_ep}\n')
     return
+
+if __name__ == '__main__':
+
+    args = args_parser()
+    exp_details(args)
+
+    train_dataset, test_dataset, user_groups = get_dataset(args)
+
+    file_name = '../save/objects/{}_{}_C{}_iid{}_unequal{}.pkl'.\
+        format(args.dataset, args.num_users, args.frac, args.iid, args.unequal)
+
+    with open(file_name, 'wb') as f:
+        pickle.dump([train_dataset, test_dataset, user_groups], f)

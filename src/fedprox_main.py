@@ -14,7 +14,7 @@ import torch
 from tensorboardX import SummaryWriter
 
 from options import args_parser
-from update import LocalUpdate, test_inference
+from update import ProxLocalUpdate, test_inference
 from models import MLP, CNNMnist, CNNFashion_Mnist, CNNCifar
 from utils import get_dataset, average_weights, exp_details
 
@@ -88,8 +88,8 @@ if __name__ == '__main__':
         idxs_users = np.random.choice(range(args.num_users), m, replace=False)
 
         for idx in idxs_users:
-            local_model = LocalUpdate(args=args, dataset=train_dataset,
-                                      idxs=user_groups[idx], logger=logger)
+            local_model = ProxLocalUpdate(args=args, dataset=train_dataset,
+                                          idxs=user_groups[idx], logger=logger)
             w, loss = local_model.update_weights(
                 model=copy.deepcopy(global_model), global_round=epoch)
             local_weights.append(copy.deepcopy(w))
@@ -109,8 +109,8 @@ if __name__ == '__main__':
         global_model.eval()
         for idx in idxs_users:
         # for c in range(args.num_users):
-            local_model = LocalUpdate(args=args, dataset=train_dataset,
-                                      idxs=user_groups[idx], logger=logger)
+            local_model = ProxLocalUpdate(args=args, dataset=train_dataset,
+                                          idxs=user_groups[idx], logger=logger)
             acc = local_model.inference(model=global_model)
             list_acc.append(acc)
 
@@ -134,7 +134,7 @@ if __name__ == '__main__':
     # print("|---- Test Accuracy: {:.2f}%".format(100*test_acc))
 
     # Saving the objects train_loss and train_accuracy:
-    file_name = '../save/objects/fed_{}_{}_{}_C[{}]_iid[{}]_E[{}]_B[{}]_unequal[{}].pkl'.\
+    file_name = '../save/objects/fedprox_{}_{}_{}_C[{}]_iid[{}]_E[{}]_B[{}]_unequal[{}].pkl'.\
         format(args.dataset, args.model, args.epochs, args.frac, args.iid,
                args.local_ep, args.local_bs, args.unequal)
 

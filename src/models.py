@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # Python version: 3.6
 
+import torch
 from torch import nn
 import torch.nn.functional as F
 
@@ -84,6 +85,41 @@ class CNNCifar(nn.Module):
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return F.log_softmax(x, dim=1)
+    # def __init__(self, args):
+    #     super(CNNCifar, self).__init__()
+    #     self.conv1 = nn.Sequential(
+    #         nn.Conv2d(3,
+    #                     32,
+    #                     kernel_size=5,
+    #                     padding=0,
+    #                     stride=1,
+    #                     bias=True),
+    #         nn.ReLU(inplace=True),
+    #         nn.MaxPool2d(kernel_size=(2, 2))
+    #     )
+    #     self.conv2 = nn.Sequential(
+    #         nn.Conv2d(32,
+    #                     64,
+    #                     kernel_size=5,
+    #                     padding=0,
+    #                     stride=1,
+    #                     bias=True),
+    #         nn.ReLU(inplace=True),
+    #         nn.MaxPool2d(kernel_size=(2, 2))
+    #     )
+    #     self.fc1 = nn.Sequential(
+    #         nn.Linear(1600, 512),
+    #         nn.ReLU(inplace=True)
+    #     )
+    #     self.fc = nn.Linear(512, args.num_classes)
+    #
+    # def forward(self, x):
+    #     out = self.conv1(x)
+    #     out = self.conv2(out)
+    #     out = torch.flatten(out, 1)
+    #     out = self.fc1(out)
+    #     out = self.fc(out)
+    #     return F.log_softmax(out, dim=1)
 
 class modelC(nn.Module):
     def __init__(self, input_size, n_classes=10, **kwargs):
